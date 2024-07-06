@@ -6,14 +6,23 @@ const MOVIE_REVIEW_PROGRAM_ID = 'CenYq6bDRB7p73EjsPEpiYN7uveyPUTdXkDkgUduboaN'
 export class MovieCoordinator {
     static accounts: PublicKey[] = []
 
-    static async prefetchAccounts(connection: Connection){
+    static async prefetchAccounts(connection: Connection) {
         const accounts = await connection.getProgramAccounts(
             new PublicKey(MOVIE_REVIEW_PROGRAM_ID),
             {
-                dataSlice: {offset:0,length:0},
+                dataSlice: { offset: 2, length: 18 },
             }
-        )
-        this.accounts = accounts.map((a)=>a.pubkey);
+        );
+
+        accounts.sort((a, b) => {
+            const lengthA = a.account.data.readUInt32LE(2);
+            const lengthB = b.account.data.readUInt32LE(2);
+            const dataA = a.account.data.slice(6, 6 + lengthA).toString('utf8');
+            const dataB = b.account.data.slice(6, 6 + lengthB).toString('utf8');
+            return dataA.localeCompare(dataB);
+        });
+
+        this.accounts = accounts.map((a) => a.pubkey);
     }
 
     static async fetchPage(connection: Connection,page: number,perPage: number) : Promise<Movie[]>{
